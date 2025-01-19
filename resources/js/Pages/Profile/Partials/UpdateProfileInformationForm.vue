@@ -1,9 +1,19 @@
 <script setup>
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
-import { Link, useForm, usePage } from '@inertiajs/vue3';
+import InputError from "@/Components/InputError.vue";
+import InputLabel from "@/Components/InputLabel.vue";
+import PrimaryButton from "@/Components/PrimaryButton.vue";
+import TextInput from "@/Components/TextInput.vue";
+import TextareaInput from "@/Components/TextareaInput.vue";
+import { Link, useForm, usePage } from "@inertiajs/vue3";
+
+const user = usePage().props.auth.user;
+
+const form = useForm({
+    name: user.name,
+    email: user.email,
+    username: user.username,
+    bio: user.bio ?? "",
+});
 
 defineProps({
     mustVerifyEmail: {
@@ -12,13 +22,6 @@ defineProps({
     status: {
         type: String,
     },
-});
-
-const user = usePage().props.auth.user;
-
-const form = useForm({
-    name: user.name,
-    email: user.email,
 });
 </script>
 
@@ -33,10 +36,11 @@ const form = useForm({
                 Update your account's profile information and email address.
             </p>
         </header>
-
         <form
             @submit.prevent="form.patch(route('profile.update'))"
             class="mt-6 space-y-6"
+            method="post"
+            enctype="multipart/form-data"
         >
             <div>
                 <InputLabel for="name" value="Name" />
@@ -67,6 +71,35 @@ const form = useForm({
                 />
 
                 <InputError class="mt-2" :message="form.errors.email" />
+            </div>
+
+            <div>
+                <InputLabel for="username" value="username" />
+
+                <TextInput
+                    id="username"
+                    type="text"
+                    class="mt-1 block w-full"
+                    v-model="form.username"
+                    required
+                    autocomplete="username"
+                />
+
+                <InputError class="mt-2" :message="form.errors.username" />
+            </div>
+
+            <div>
+                <InputLabel for="bio" value="bio" />
+
+                <TextareaInput
+                    id="bio"
+                    type="text"
+                    class="mt-1 w-full h-[90px] whitespace-pre-wrap"
+                    v-model="form.bio"
+                    autocomplete="bio"
+                />
+
+                <InputError class="mt-2" :message="form.errors.bio" />
             </div>
 
             <div v-if="mustVerifyEmail && user.email_verified_at === null">
@@ -103,7 +136,7 @@ const form = useForm({
                         v-if="form.recentlySuccessful"
                         class="text-sm text-gray-600"
                     >
-                        Saved.
+                        {{ status }}
                     </p>
                 </Transition>
             </div>

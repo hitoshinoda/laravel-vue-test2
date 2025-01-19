@@ -11,6 +11,15 @@ class TweetController extends Controller
     public function index()
     {
         $tweets = Tweet::with('user')->latest()->get();
+
+        // プロフィール画像のURLを設定
+        $tweets = $tweets->map(function ($tweet) {
+            $tweet->user->profile_image_url = $tweet->user->profile_image
+                ? asset('storage/' . $tweet->user->profile_image)
+                : asset('images/default-profile.png'); // デフォルト画像
+            return $tweet;
+        });
+
         return response()->json($tweets);
     }
 
@@ -29,6 +38,10 @@ class TweetController extends Controller
         // 関連ユーザー情報を含めたツイートを返す
         $tweet->load('user');
 
+        $tweet->user->profile_image_url = $tweet->user->profile_image
+            ? asset('storage/' . $tweet->user->profile_image)
+            : asset('images/default-profile.png');
+
         return response()->json($tweet);
     }
 
@@ -41,5 +54,40 @@ class TweetController extends Controller
 
         $tweet->delete();
         return response()->json(['message' => 'Tweet deleted successfully']);
+    }
+
+    //プロフィールに表示する自分のツイート
+    public function userTweets()
+    {
+        $tweets = Tweet::where('user_id', auth()->id())
+            ->latest()
+            ->with('user')
+            ->get();
+
+        //自分のプロフィール画像呼び出し
+        $tweets = $tweets->map(function ($tweet) {
+            $tweet->user->profile_image_url = $tweet->user->profile_image
+                ? asset('storage/' . $tweet->user->profile_image)
+                : asset('images/default-profile.png'); // デフォルト画像
+            return $tweet;
+        });
+
+        return response()->json([
+            'tweets' => $tweets,
+        ]);
+    }
+
+    //プロフィールに表示する自分のリプライ
+    public function userReplies()
+    {
+        $replies = Tweet::where('type', 'reply')
+            ->where('user_id', auth()->id())
+            ->latest()
+            ->with('user')
+            ->get();
+
+        return response()->json([
+            'tweets' => $replies,
+        ]);
     }
 }

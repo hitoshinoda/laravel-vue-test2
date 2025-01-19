@@ -21,23 +21,51 @@ class ProfileController extends Controller
         return Inertia::render('Profile/Edit', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => session('status'),
+            'user' => $request->user(),
+            //'bio' => $request->user(),
         ]);
     }
 
     /**
      * Update the user's profile information.
      */
+    // public function update(ProfileUpdateRequest $request): RedirectResponse
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
+        }
+
+        $request->user()->bio = $request->input('bio', '');
+
+        $user->save();
+
+        return Redirect::route('profile.edit')->with('status', 'Profile updated successfully!');
+    }
+
+    public function updateImage(Request $request)
+    {
+        $request->validate([
+            'profile_image' => 'nullable|image|max:2048',
+        ]);
+
+        if ($request->hasFile('profile_image')) {
+
+            if ($request->user()->profile_image && \Storage::disk('public')->exists($request->user()->profile_image)) {
+                \Storage::disk('public')->delete($request->user()->profile_image);
+            } else {
+
+            }
+
+            $path = $request->file('profile_image')->store('profile_images', 'public');
+            $request->user()->profile_image = $path;
         }
 
         $request->user()->save();
 
-        return Redirect::route('profile.edit');
+        return back();
     }
 
     /**

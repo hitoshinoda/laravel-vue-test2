@@ -25,4 +25,11 @@ class Tweet extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    // Userモデルにいいねのリレーションを追加
+    public function likes()
+    {
+        return $this->hasMany(Like::class);
+    }
+
 }
